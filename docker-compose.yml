@@ -9,3 +9,18 @@ services:
       - "3000:3000"
     env_file:
       - .env
+    environment:
+      DATABASE_URL: "file:/app/sqlite/dev.db"
+    volumes:
+      - sqlite-data:/app/sqlite
+    depends_on:
+      - sqlite
+
+  sqlite:
+    image: keinos/sqlite3:latest
+    command: ["sh", "-c", "sqlite3 /app/sqlite/dev.db \"\" && tail -f /dev/null"]
+    volumes:
+      - sqlite-data:/app/sqlite
+
+volumes:
+  sqlite-data:

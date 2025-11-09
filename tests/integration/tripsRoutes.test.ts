@@ -5,6 +5,32 @@ import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 import type { Trip } from '../../src/domain/SavedTrip';
 import { buildServer } from '../../src';
 import { InMemoryCache } from '../../src/infra/cache/InMemoryCache';
+import type { Auth0ManagementClient } from '../../src/domain/ports/Auth0ManagementClient';
+import type { User } from '../../src/domain/User';
+import type { UserRepository } from '../../src/domain/ports/UserRepository';
+
+class InMemoryUserRepository implements UserRepository {
+  private users = new Map<string, User>();
+
+  findByAuth0Sub(): Promise<User | null> {
+    return Promise.resolve(null);
+  }
+
+  create(data: { auth0Sub: string; email?: string | null; name?: string | null }): Promise<User> {
+    return Promise.resolve({
+      id: 'user-1',
+      auth0Sub: data.auth0Sub,
+      email: data.email ?? null,
+      name: data.name ?? null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+  }
+
+  update(): Promise<User> {
+    throw new Error('Not implemented');
+  }
+}
 import { TripsApiClient } from '../../src/infra/providers/TripsApiClient';
 
 describe('Trips routes', () => {
@@ -31,7 +57,17 @@ describe('Trips routes', () => {
     });
     const cache = new InMemoryCache();
 
-    const app = buildServer({ cache, tripsProvider: provider });
+    const auth0ManagementClient: Auth0ManagementClient = {
+      createUser: () => Promise.reject(new Error('not used')),
+    };
+
+    const app = buildServer({
+      cache,
+      tripsProvider: provider,
+      verifyAccessToken: () => Promise.reject(new Error('not used')),
+      userRepository: new InMemoryUserRepository(),
+      auth0ManagementClient,
+    });
     await app.ready();
 
     const externalTrips: Trip[] = [

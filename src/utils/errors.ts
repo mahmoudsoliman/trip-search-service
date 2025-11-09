@@ -26,14 +26,14 @@ export class NotFoundError extends ApplicationError {
 }
 
 export class UnauthorizedError extends ApplicationError {
-  constructor(message = 'Unauthorized') {
-    super(message, 401);
+  constructor(message = 'Unauthorized', details?: ErrorDetails) {
+    super(message, 401, details);
   }
 }
 
 export class ForbiddenError extends ApplicationError {
-  constructor(message = 'Forbidden') {
-    super(message, 403);
+  constructor(message = 'Forbidden', details?: ErrorDetails) {
+    super(message, 403, details);
   }
 }
 
