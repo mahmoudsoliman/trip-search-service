@@ -6,6 +6,7 @@ WORKDIR /app
 FROM base AS deps
 ENV NODE_ENV=development
 COPY package.json package-lock.json ./
+COPY prisma ./prisma
 RUN npm ci
 
 FROM deps AS builder

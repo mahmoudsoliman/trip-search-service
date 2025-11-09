@@ -1,13 +1,13 @@
 # Trip Search Service
 
-Fastify + TypeScript API that integrates with third-party trip search providers, persists saved trip snapshots per user, and exposes Redis-backed caching. The project follows a clean/hexagonal architecture with domain-driven design influences.
+Fastify + TypeScript API that integrates with third-party trip search providers and persists saved trip snapshots per user. The project follows a clean/hexagonal architecture with domain-driven design influences.
 
 ## Getting Started
 
 ### Prerequisites
 - Node.js 18+
 - npm 9+
-- Docker and Docker Compose (for Redis and local DB support)
+- Docker and Docker Compose (for optional containerised runs)
 
 ### Installation
 ```bash
@@ -44,7 +44,7 @@ npm run coverage
 ```
 
 ### Docker Compose
-Bring up the API (after building) and Redis cache:
+Build and start the API in a container:
 ```bash
 docker-compose up --build
 ```
