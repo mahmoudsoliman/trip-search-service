@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "CommonJS",
+    "lib": ["ES2022"],
+    "moduleResolution": "Node",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "rootDir": "src",
+    "outDir": "dist",
+    "baseUrl": "./src",
+    "types": ["node"],
+    "noEmit": true
+  },
+  "include": ["src", "tests", "prisma/seed.ts", "vitest.config.ts"],
+  "exclude": ["node_modules", "dist"]
+}
+

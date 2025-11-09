@@ -1,0 +1,68 @@
+{
+  "name": "trip-search-service",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "dev": "tsx watch src/server.ts",
+    "start": "node dist/server.js",
+    "lint": "eslint --no-error-on-unmatched-pattern --max-warnings=0 --ext .ts src tests",
+    "lint:fix": "eslint --no-error-on-unmatched-pattern --max-warnings=0 --ext .ts src tests --fix",
+    "format": "prettier --write .",
+    "test": "vitest run --passWithNoTests",
+    "test:watch": "vitest watch --passWithNoTests",
+    "coverage": "vitest run --coverage --passWithNoTests",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:generate": "prisma generate",
+    "prepare": "prisma generate"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mahmoudsoliman/trip-search-service.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/mahmoudsoliman/trip-search-service/issues"
+  },
+  "homepage": "https://github.com/mahmoudsoliman/trip-search-service#readme",
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@fastify/swagger": "^9.6.0",
+    "@fastify/swagger-ui": "^5.2.3",
+    "@prisma/client": "^6.19.0",
+    "dotenv": "^17.2.3",
+    "fastify": "^5.6.1",
+    "pino": "^10.1.0",
+    "redis": "^5.9.0",
+    "undici": "^7.16.0",
+    "zod": "^4.1.12"
+  },
+  "devDependencies": {
+    "@types/node": "^24.10.0",
+    "@types/supertest": "^6.0.3",
+    "@typescript-eslint/eslint-plugin": "^8.46.3",
+    "@typescript-eslint/parser": "^8.46.3",
+    "@vitest/coverage-v8": "^4.0.8",
+    "eslint": "^9.39.1",
+    "eslint-config-prettier": "^10.1.8",
+    "nock": "^14.0.10",
+    "pino-pretty": "^13.1.2",
+    "prettier": "^3.6.2",
+    "prisma": "^6.19.0",
+    "supertest": "^7.1.4",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.46.3",
+    "vitest": "^4.0.8"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  }
+}
