@@ -1,5 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 
+import type { PrismaClient } from '@prisma/client';
+
 import type { CachePort } from '../../../domain/ports/CachePort';
 import type { TripsProvider } from '../../../domain/ports/TripsProvider';
 import type { Auth0ManagementClient } from '../../../domain/ports/Auth0ManagementClient';
@@ -8,6 +10,7 @@ import type { SavedTripsRepository } from '../../../domain/ports/SavedTripsRepos
 import { registerMeRoutes } from './meRoutes';
 import { registerTripsRoutes } from './tripsRoutes';
 import { registerUsersRoutes } from './usersRoutes';
+import { registerSystemRoutes } from './systemRoutes';
 
 export interface RouteDependencies {
   cache: CachePort;
@@ -17,6 +20,8 @@ export interface RouteDependencies {
   auth0ManagementClient: Auth0ManagementClient;
   savedTripsRepository: SavedTripsRepository;
   savedTripsCacheTtlSeconds: number;
+  prismaClient?: PrismaClient;
+  tripsApiBaseUrl?: string;
 }
 
 export function registerRoutes(app: FastifyInstance, dependencies: RouteDependencies): void {
@@ -30,5 +35,10 @@ export function registerRoutes(app: FastifyInstance, dependencies: RouteDependen
   registerUsersRoutes(app, {
     userRepository: dependencies.userRepository,
     auth0ManagementClient: dependencies.auth0ManagementClient,
+  });
+  registerSystemRoutes(app, {
+    cache: dependencies.cache,
+    prismaClient: dependencies.prismaClient,
+    tripsApiBaseUrl: dependencies.tripsApiBaseUrl,
   });
 }

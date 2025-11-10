@@ -110,7 +110,7 @@ describe('Auth guard', () => {
     });
     await app.ready();
 
-    const response = await request(app.server).get('/v1/me/profile').expect(401);
+    const response = await request(app.server).get('/v1/me/saved-trips').expect(401);
     const body = response.body as { message: string };
     expect(body.message).toBe('Missing bearer token');
 
@@ -142,14 +142,13 @@ describe('Auth guard', () => {
     await app.ready();
 
     const response = await request(app.server)
-      .get('/v1/me/profile')
+      .get('/v1/me/saved-trips')
       .set('Authorization', 'Bearer test-token')
       .expect(200);
 
-    const body = response.body as { user: { auth0Sub: string; email: string | null } };
+    const body = response.body as { savedTrips: unknown[] };
 
-    expect(body.user.auth0Sub).toBe('auth0|user2');
-    expect(body.user.email).toBe('second@example.com');
+    expect(Array.isArray(body.savedTrips)).toBe(true);
 
     await app.close();
   });

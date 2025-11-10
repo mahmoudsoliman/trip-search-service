@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { ALLOWED_AIRPORT_CODES, ALLOWED_AIRPORT_CODE_SET } from '../constants/airports';
+import { ALLOWED_AIRPORT_CODE_SET } from '../constants/airports';
 
 const iataSchema = z
   .string()

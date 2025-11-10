@@ -22,25 +22,8 @@ export function registerMeRoutes(
   dependencies: MeRouteDependencies,
 ): void {
   app.register((instance, _opts, done) => {
-    instance.addHook('preHandler', async (request, reply) => {
-      await instance.authenticate(request, reply);
-    });
-
-    instance.get('/v1/me/profile', async (request, reply) => {
-      if (!request.currentUser) {
-        throw new ApplicationError('User context missing', 500);
-      }
-
-      return {
-        user: {
-          id: request.currentUser.id,
-          auth0Sub: request.currentUser.auth0Sub,
-          email: request.currentUser.email,
-          name: request.currentUser.name,
-          createdAt: request.currentUser.createdAt,
-          updatedAt: request.currentUser.updatedAt,
-        },
-      };
+    instance.addHook('preHandler', async (request, _reply) => {
+      await instance.authenticate(request, _reply);
     });
 
     instance.post('/v1/me/saved-trips', async (request, reply) => {

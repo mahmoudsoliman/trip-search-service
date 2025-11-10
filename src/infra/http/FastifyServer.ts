@@ -1,6 +1,8 @@
 import { randomUUID } from 'node:crypto';
 
 import Fastify, { type FastifyInstance } from 'fastify';
+import swagger from '@fastify/swagger';
+import swaggerUi from '@fastify/swagger-ui';
 import { PrismaClient } from '@prisma/client';
 
 import type { CachePort } from '../../domain/ports/CachePort';
@@ -29,6 +31,7 @@ interface ApplicationDependencies {
   verifyAccessToken: VerifyAccessToken;
   auth0ManagementClient: Auth0ManagementClientPort;
   prismaClient?: PrismaClient;
+  tripsApiBaseUrl?: string;
 }
 
 export function buildServer(
@@ -39,6 +42,34 @@ export function buildServer(
   const app = Fastify({
     logger: { ...loggerConfig },
     genReqId: () => randomUUID(),
+  });
+
+  void app.register(swagger, {
+    openapi: {
+      info: {
+        title: 'Trips Service v3',
+        version: '1.0.0',
+      },
+      components: {
+        securitySchemes: {
+          bearerAuth: {
+            type: 'http',
+            scheme: 'bearer',
+            bearerFormat: 'JWT',
+          },
+        },
+      },
+      security: [{ bearerAuth: [] }],
+    },
+  });
+
+  void app.register(swaggerUi, {
+    routePrefix: '/docs',
+    uiConfig: {
+      docExpansion: 'list',
+    },
+    staticCSP: true,
+    transformStaticCSP: (header) => header,
   });
 
   registerErrorHandler(app);
@@ -54,6 +85,8 @@ export function buildServer(
     auth0ManagementClient: dependencies.auth0ManagementClient,
     savedTripsRepository: dependencies.savedTripsRepository,
     savedTripsCacheTtlSeconds: config.CACHE_TTL_SAVED_TRIPS_SECONDS,
+    prismaClient: dependencies.prismaClient,
+    tripsApiBaseUrl: dependencies.tripsApiBaseUrl,
   });
 
   const prismaClient = dependencies.prismaClient;
@@ -160,6 +193,7 @@ function createDependencies(
     verifyAccessToken,
     auth0ManagementClient,
     prismaClient,
+    tripsApiBaseUrl: overrides.tripsApiBaseUrl ?? config.TRIPS_API_BASE_URL,
   };
 }
 
