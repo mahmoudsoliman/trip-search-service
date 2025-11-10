@@ -2,6 +2,7 @@ import type { FastifyInstance } from 'fastify';
 
 import { saveUserTrip } from '../../../app/use-cases/saveUserTrip';
 import { listUserSavedTrips, buildSavedTripsCacheKey } from '../../../app/use-cases/listUserSavedTrips';
+import { deleteUserSavedTrip } from '../../../app/use-cases/deleteUserSavedTrip';
 import type { CachePort } from '../../../domain/ports/CachePort';
 import type { SavedTripsRepository } from '../../../domain/ports/SavedTripsRepository';
 import type { TripsProvider } from '../../../domain/ports/TripsProvider';
@@ -97,6 +98,30 @@ export function registerMeRoutes(
       return {
         savedTrips: trips.map(mapSavedTrip),
       };
+    });
+
+    instance.delete('/v1/me/saved-trips/:externalTripId', async (request, reply) => {
+      if (!request.currentUser) {
+        void reply.status(500);
+        return { error: 'User context missing' };
+      }
+
+      const externalTripId = (request.params as { externalTripId: string }).externalTripId;
+
+      await deleteUserSavedTrip(
+        {
+          savedTripsRepository: dependencies.savedTripsRepository,
+          cache: dependencies.cache,
+          cacheKeyBuilder: buildSavedTripsCacheKey,
+        },
+        {
+          userId: request.currentUser.id,
+          externalTripId,
+        },
+      );
+
+      void reply.status(204);
+      return null;
     });
 
     done();
