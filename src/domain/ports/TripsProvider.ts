@@ -10,5 +10,6 @@ export interface TripsSearchInput {
 
 export interface TripsProvider {
   searchTrips(input: Omit<TripsSearchInput, 'sortBy'>): Promise<Trip[]>;
+  getTripById(tripId: string): Promise<Trip | null>;
 }
 

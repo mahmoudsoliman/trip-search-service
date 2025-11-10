@@ -25,7 +25,7 @@ interface AuthPluginOptions {
 
 export const authPlugin = fp(
   (app: FastifyInstance, options: AuthPluginOptions) => {
-    app.decorate('authenticate', async (request: FastifyRequest) => {
+    app.decorate('authenticate', async (request: FastifyRequest, _reply: FastifyReply) => {
       const token = extractBearerToken(request);
       if (!token) {
         throw new UnauthorizedError('Missing bearer token');

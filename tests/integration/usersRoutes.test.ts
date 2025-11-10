@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 import type { Auth0ManagementClient } from '../../src/domain/ports/Auth0ManagementClient';
 import type { User } from '../../src/domain/User';
 import type { UserRepository } from '../../src/domain/ports/UserRepository';
+import type { SavedTripsRepository, SaveTripInput } from '../../src/domain/ports/SavedTripsRepository';
 import { buildServer } from '../../src';
 import { InMemoryCache } from '../../src/infra/cache/InMemoryCache';
 
@@ -34,6 +35,36 @@ class InMemoryUserRepository implements UserRepository {
   }
 }
 
+class NoopSavedTripsRepository implements SavedTripsRepository {
+  listByUserId() {
+    return Promise.resolve([]);
+  }
+
+  upsert(input: SaveTripInput) {
+    return Promise.resolve({
+      id: 'saved-1',
+      userId: input.userId,
+      externalTripId: input.trip.id,
+      origin: input.trip.origin,
+      destination: input.trip.destination,
+      cost: input.trip.cost,
+      duration: input.trip.duration,
+      type: input.trip.type,
+      displayName: input.trip.display_name,
+      savedAt: new Date(),
+      fetchedAt: new Date(),
+    });
+  }
+
+  deleteByExternalTripId() {
+    return Promise.resolve();
+  }
+
+  findByExternalTripId() {
+    return Promise.resolve(null);
+  }
+}
+
 describe('Users routes', () => {
   it('creates a user and returns persisted data', async () => {
     const auth0Client: Auth0ManagementClient = {
@@ -51,10 +82,12 @@ describe('Users routes', () => {
       cache: new InMemoryCache(),
       tripsProvider: {
         searchTrips: () => Promise.resolve([]),
+        getTripById: () => Promise.resolve(null),
       },
       verifyAccessToken: () => Promise.reject(new Error('not used')),
       auth0ManagementClient: auth0Client,
       userRepository,
+      savedTripsRepository: new NoopSavedTripsRepository(),
     });
     await app.ready();
 

@@ -41,6 +41,22 @@ export class TripsApiClient implements TripsProvider {
     return data.trips;
   }
 
+  async getTripById(tripId: string): Promise<Trip | null> {
+    const url = new URL(`/default/trips/${tripId}`, this.baseUrl);
+
+    try {
+      const response = await this.executeWithRetries(url);
+      const data = (await response.json()) as Trip;
+      return data;
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('404')) {
+        return null;
+      }
+
+      throw error;
+    }
+  }
+
   private async executeWithRetries(url: URL): Promise<Response> {
     let attempt = 0;
     let lastError: unknown;

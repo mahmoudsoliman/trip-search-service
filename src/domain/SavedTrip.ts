@@ -8,10 +8,8 @@ export interface SavedTripSnapshot {
   duration: number;
   type: string;
   displayName: string;
-  provider?: string | null;
   savedAt: Date;
   fetchedAt: Date;
-  raw?: Record<string, unknown> | null;
 }
 
 export interface Trip {
@@ -22,6 +20,5 @@ export interface Trip {
   duration: number;
   type: string;
   display_name: string;
-  provider?: string;
 }
 

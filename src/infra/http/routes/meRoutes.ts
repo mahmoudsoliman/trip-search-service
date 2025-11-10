@@ -1,6 +1,24 @@
 import type { FastifyInstance } from 'fastify';
 
-export function registerMeRoutes(app: FastifyInstance): void {
+import { saveUserTrip, buildSavedTripsCacheKey } from '../../../app/use-cases/saveUserTrip';
+import type { CachePort } from '../../../domain/ports/CachePort';
+import type { SavedTripsRepository } from '../../../domain/ports/SavedTripsRepository';
+import type { TripsProvider } from '../../../domain/ports/TripsProvider';
+import { mapSavedTrip } from '../../../presentation/mappers/savedTripMapper';
+import { saveUserTripSchema } from '../../../presentation/schemas/saveUserTrip.schema';
+import { ValidationError } from '../../../utils/errors';
+
+interface MeRouteDependencies {
+  savedTripsRepository: SavedTripsRepository;
+  cache: CachePort;
+  savedTripsCacheTtlSeconds: number;
+  tripsProvider: TripsProvider;
+}
+
+export function registerMeRoutes(
+  app: FastifyInstance,
+  dependencies: MeRouteDependencies,
+): void {
   app.register((instance, _opts, done) => {
     instance.addHook('preHandler', async (request, reply) => {
       await instance.authenticate(request, reply);
@@ -24,7 +42,38 @@ export function registerMeRoutes(app: FastifyInstance): void {
       };
     });
 
+    instance.post('/v1/me/saved-trips', async (request, reply) => {
+      if (!request.currentUser) {
+        void reply.status(500);
+        return { error: 'User context missing' };
+      }
+
+      const parsed = saveUserTripSchema.safeParse(request.body);
+      if (!parsed.success) {
+        throw new ValidationError('Invalid saved trip payload', {
+          issues: parsed.error.issues,
+        });
+      }
+
+      const savedTrip = await saveUserTrip(
+        {
+          savedTripsRepository: dependencies.savedTripsRepository,
+          cache: dependencies.cache,
+          cacheKeyBuilder: buildSavedTripsCacheKey,
+          tripsProvider: dependencies.tripsProvider,
+        },
+        {
+          userId: request.currentUser.id,
+          tripId: parsed.data.tripId,
+        },
+      );
+
+      void reply.status(201);
+      return {
+        savedTrip: mapSavedTrip(savedTrip),
+      };
+    });
+
     done();
   });
 }
-

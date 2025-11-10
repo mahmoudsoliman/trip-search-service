@@ -27,10 +27,8 @@ model UserSavedTrip {
   duration       Float
   type           String
   displayName    String
-  provider       String?
   savedAt        DateTime @default(now())
   fetchedAt      DateTime @default(now())
-  raw            Json?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 

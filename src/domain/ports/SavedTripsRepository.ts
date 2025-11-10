@@ -3,9 +3,7 @@ import type { SavedTripSnapshot, Trip } from '../SavedTrip';
 export interface SaveTripInput {
   userId: string;
   trip: Trip;
-  provider?: string;
   fetchedAt?: Date;
-  raw?: Record<string, unknown> | null;
 }
 
 export interface SavedTripsRepository {

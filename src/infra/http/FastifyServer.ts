@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-redundant-type-constituents */
 import { randomUUID } from 'node:crypto';
 
 import Fastify, { type FastifyInstance } from 'fastify';
@@ -7,12 +6,14 @@ import { PrismaClient } from '@prisma/client';
 import type { CachePort } from '../../domain/ports/CachePort';
 import type { TripsProvider } from '../../domain/ports/TripsProvider';
 import type { UserRepository } from '../../domain/ports/UserRepository';
+import type { SavedTripsRepository } from '../../domain/ports/SavedTripsRepository';
 import { InMemoryCache } from '../cache/InMemoryCache';
 import { config } from '../config';
 import { createAuth0JwtVerifier, type VerifyAccessToken } from '../auth/auth0Jwt';
 import { loggerConfig } from '../obs/logger';
 import { TripsApiClient } from '../providers/TripsApiClient';
 import { PrismaUserRepository } from '../repos/PrismaUserRepository';
+import { PrismaSavedTripsRepository } from '../repos/PrismaSavedTripsRepository';
 import { authPlugin } from './middlewares/authPlugin';
 import { registerErrorHandler } from './middlewares/errorHandler';
 import { registerRoutes } from './routes';
@@ -23,6 +24,7 @@ interface ApplicationDependencies {
   cache: CachePort;
   tripsProvider: TripsProvider;
   userRepository: UserRepository;
+  savedTripsRepository: SavedTripsRepository;
   verifyAccessToken: VerifyAccessToken;
   auth0ManagementClient: Auth0ManagementClientPort;
   prismaClient?: PrismaClient;
@@ -49,6 +51,8 @@ export function buildServer(
     searchCacheTtlSeconds: config.CACHE_TTL_SEARCH_SECONDS,
     userRepository: dependencies.userRepository,
     auth0ManagementClient: dependencies.auth0ManagementClient,
+    savedTripsRepository: dependencies.savedTripsRepository,
+    savedTripsCacheTtlSeconds: config.CACHE_TTL_SAVED_TRIPS_SECONDS,
   });
 
   const prismaClient = dependencies.prismaClient;
@@ -104,10 +108,16 @@ function createDependencies(
 
   let prismaClient: PrismaClient | undefined = overrides.prismaClient;
   let userRepository: UserRepository | undefined = overrides.userRepository;
+  let savedTripsRepository: SavedTripsRepository | undefined = overrides.savedTripsRepository;
 
   if (!userRepository) {
     prismaClient ??= new PrismaClient();
     userRepository = new PrismaUserRepository(prismaClient);
+  }
+
+  if (!savedTripsRepository) {
+    prismaClient ??= new PrismaClient();
+    savedTripsRepository = new PrismaSavedTripsRepository(prismaClient);
   }
 
   const verifyAccessToken =
@@ -143,6 +153,7 @@ function createDependencies(
     cache,
     tripsProvider,
     userRepository,
+    savedTripsRepository,
     verifyAccessToken,
     auth0ManagementClient,
     prismaClient,

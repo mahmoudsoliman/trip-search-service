@@ -5,6 +5,7 @@ import type { User } from '../../src/domain/User';
 import type { UserRepository } from '../../src/domain/ports/UserRepository';
 import type { VerifyAccessToken, VerifiedAuth0Token } from '../../src/infra/auth/auth0Jwt';
 import type { Auth0ManagementClient } from '../../src/domain/ports/Auth0ManagementClient';
+import type { SavedTripsRepository, SaveTripInput } from '../../src/domain/ports/SavedTripsRepository';
 import { InMemoryCache } from '../../src/infra/cache/InMemoryCache';
 import { buildServer } from '../../src';
 
@@ -47,6 +48,36 @@ class InMemoryUserRepository implements UserRepository {
   }
 }
 
+class NoopSavedTripsRepository implements SavedTripsRepository {
+  listByUserId() {
+    return Promise.resolve([]);
+  }
+
+  upsert(input: SaveTripInput) {
+    return Promise.resolve({
+      id: 'saved-1',
+      userId: input.userId,
+      externalTripId: input.trip.id,
+      origin: input.trip.origin,
+      destination: input.trip.destination,
+      cost: input.trip.cost,
+      duration: input.trip.duration,
+      type: input.trip.type,
+      displayName: input.trip.display_name,
+      savedAt: new Date(),
+      fetchedAt: new Date(),
+    });
+  }
+
+  deleteByExternalTripId() {
+    return Promise.resolve();
+  }
+
+  findByExternalTripId() {
+    return Promise.resolve(null);
+  }
+}
+
 describe('Auth guard', () => {
   const verifyAccessToken: VerifyAccessToken = vi
     .fn(() =>
@@ -70,10 +101,12 @@ describe('Auth guard', () => {
       cache: new InMemoryCache(),
       tripsProvider: {
         searchTrips: () => Promise.resolve([]),
+        getTripById: () => Promise.resolve(null),
       },
       verifyAccessToken,
       userRepository,
       auth0ManagementClient,
+      savedTripsRepository: new NoopSavedTripsRepository(),
     });
     await app.ready();
 
@@ -93,6 +126,7 @@ describe('Auth guard', () => {
       cache: new InMemoryCache(),
       tripsProvider: {
         searchTrips: () => Promise.resolve([]),
+        getTripById: () => Promise.resolve(null),
       },
       verifyAccessToken: (() =>
         Promise.resolve({
@@ -103,6 +137,7 @@ describe('Auth guard', () => {
         } as VerifiedAuth0Token)) as VerifyAccessToken,
       userRepository: new InMemoryUserRepository(),
       auth0ManagementClient,
+      savedTripsRepository: new NoopSavedTripsRepository(),
     });
     await app.ready();
 
