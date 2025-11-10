@@ -25,11 +25,10 @@ function mapToDomain(savedTrip: UserSavedTrip): SavedTripSnapshot {
 export class PrismaSavedTripsRepository implements SavedTripsRepository {
   constructor(private readonly prisma: PrismaClient) {}
 
-  async listByUserId(userId: string, provider?: string): Promise<SavedTripSnapshot[]> {
+  async listByUserId(userId: string): Promise<SavedTripSnapshot[]> {
     const trips = await this.prisma.userSavedTrip.findMany({
       where: {
         userId,
-        ...(provider ? { provider } : {}),
       },
       orderBy: {
         savedAt: 'desc',
