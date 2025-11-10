@@ -1,5 +1,6 @@
 import request from 'supertest';
 import nock from 'nock';
+import type { FastifyInstance } from 'fastify';
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 
 import type { Trip } from '../../src/domain/SavedTrip';
@@ -80,7 +81,7 @@ describe('Trips routes', () => {
     nock.enableNetConnect();
   });
 
-  it('returns sorted trips and caches the response', async () => {
+  function buildTestApp(): FastifyInstance {
     const provider = new TripsApiClient({
       baseUrl,
       timeoutMs: 500,
@@ -100,6 +101,12 @@ describe('Trips routes', () => {
       auth0ManagementClient,
       savedTripsRepository: new NoopSavedTripsRepository(),
     });
+
+    return app;
+  }
+
+  it('returns sorted trips and caches the response', async () => {
+    const app = buildTestApp();
     await app.ready();
 
     const externalTrips: Trip[] = [
@@ -147,6 +154,52 @@ describe('Trips routes', () => {
     const cachedBody = cachedResponse.body as { trips: Trip[] };
 
     expect(cachedBody.trips).toEqual(firstBody.trips);
+
+    await app.close();
+  });
+
+  it('propagates 404 responses from the trips provider', async () => {
+    const app = buildTestApp();
+    await app.ready();
+
+    const scope = nock(baseUrl)
+      .get('/default/trips')
+      .query({ origin: 'SYD', destination: 'GRU' })
+      .reply(404, { message: 'No trips' });
+
+    const response = await request(app.server)
+      .get('/v1/trips/search')
+      .query({ origin: 'SYD', destination: 'GRU', sort_by: 'cheapest' })
+      .expect(404);
+
+    expect(scope.isDone()).toBe(true);
+    expect(response.body).toMatchObject({
+      statusCode: 404,
+      message: 'Trips API responded with 404 Not Found',
+    });
+
+    await app.close();
+  });
+
+  it('propagates 400 responses from the trips provider', async () => {
+    const app = buildTestApp();
+    await app.ready();
+
+    const scope = nock(baseUrl)
+      .get('/default/trips')
+      .query({ origin: 'SYD', destination: 'GRU' })
+      .reply(400, { message: 'invalid origin' });
+
+    const response = await request(app.server)
+      .get('/v1/trips/search')
+      .query({ origin: 'SYD', destination: 'GRU', sort_by: 'cheapest' })
+      .expect(400);
+
+    expect(scope.isDone()).toBe(true);
+    expect(response.body).toMatchObject({
+      statusCode: 400,
+      message: 'Trips API responded with 400 Bad Request',
+    });
 
     await app.close();
   });

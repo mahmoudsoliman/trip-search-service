@@ -26,5 +26,23 @@ describe('searchQuerySchema', () => {
       }),
     ).toThrowError(/IATA code/);
   });
+
+  it('throws when airport code is not supported', () => {
+    expect(() =>
+      searchQuerySchema.parse({
+        origin: 'AAA',
+        destination: 'GRU',
+      }),
+    ).toThrowError(/not supported/);
+  });
+
+  it('throws when origin and destination are the same', () => {
+    expect(() =>
+      searchQuerySchema.parse({
+        origin: 'SYD',
+        destination: 'syd',
+      }),
+    ).toThrowError(/Destination must be different from origin/);
+  });
 });
 

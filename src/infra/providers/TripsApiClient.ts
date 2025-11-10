@@ -2,6 +2,7 @@ import { setTimeout as setTimeoutPromise } from 'node:timers/promises';
 
 import type { Trip } from '../../domain/SavedTrip';
 import type { TripsProvider } from '../../domain/ports/TripsProvider';
+import { ApplicationError } from '../../utils/errors';
 import { logger } from '../obs/logger';
 
 interface TripsApiClientOptions {
@@ -49,7 +50,7 @@ export class TripsApiClient implements TripsProvider {
       const data = (await response.json()) as Trip;
       return data;
     } catch (error) {
-      if (error instanceof Error && error.message.includes('404')) {
+      if (error instanceof ApplicationError && error.statusCode === 404) {
         return null;
       }
 
@@ -65,6 +66,10 @@ export class TripsApiClient implements TripsProvider {
       try {
         return await this.performRequest(url);
       } catch (error) {
+        if (error instanceof ApplicationError && error.statusCode < 500) {
+          throw error;
+        }
+
         lastError = error;
         attempt += 1;
 
@@ -102,8 +107,13 @@ export class TripsApiClient implements TripsProvider {
 
       if (!response.ok) {
         const body = await response.text();
-        throw new Error(
-          `Trips API responded with ${response.status} ${response.statusText}: ${body}`,
+        throw new ApplicationError(
+          `Trips API responded with ${response.status} ${response.statusText}`,
+          response.status,
+          {
+            body,
+            url: url.toString(),
+          },
         );
       }
 
