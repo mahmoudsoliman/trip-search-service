@@ -1,6 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 
-import { saveUserTrip, buildSavedTripsCacheKey } from '../../../app/use-cases/saveUserTrip';
+import { saveUserTrip } from '../../../app/use-cases/saveUserTrip';
+import { listUserSavedTrips, buildSavedTripsCacheKey } from '../../../app/use-cases/listUserSavedTrips';
 import type { CachePort } from '../../../domain/ports/CachePort';
 import type { SavedTripsRepository } from '../../../domain/ports/SavedTripsRepository';
 import type { TripsProvider } from '../../../domain/ports/TripsProvider';
@@ -59,8 +60,8 @@ export function registerMeRoutes(
         {
           savedTripsRepository: dependencies.savedTripsRepository,
           cache: dependencies.cache,
-          cacheKeyBuilder: buildSavedTripsCacheKey,
           tripsProvider: dependencies.tripsProvider,
+          cacheKeyBuilder: buildSavedTripsCacheKey,
         },
         {
           userId: request.currentUser.id,
@@ -71,6 +72,30 @@ export function registerMeRoutes(
       void reply.status(201);
       return {
         savedTrip: mapSavedTrip(savedTrip),
+      };
+    });
+
+    instance.get('/v1/me/saved-trips', async (request, reply) => {
+      if (!request.currentUser) {
+        void reply.status(500);
+        return { error: 'User context missing' };
+      }
+
+      const trips = await listUserSavedTrips(
+        {
+          savedTripsRepository: dependencies.savedTripsRepository,
+          cache: dependencies.cache,
+          cacheTtlSeconds: dependencies.savedTripsCacheTtlSeconds,
+          cacheKeyBuilder: buildSavedTripsCacheKey,
+        },
+        {
+          userId: request.currentUser.id,
+        },
+      );
+
+      void reply.status(200);
+      return {
+        savedTrips: trips.map(mapSavedTrip),
       };
     });
 

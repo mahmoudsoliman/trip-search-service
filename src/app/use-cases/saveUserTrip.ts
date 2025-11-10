@@ -3,6 +3,7 @@ import type { CachePort } from '../../domain/ports/CachePort';
 import type { SaveTripInput, SavedTripsRepository } from '../../domain/ports/SavedTripsRepository';
 import type { TripsProvider } from '../../domain/ports/TripsProvider';
 import { NotFoundError } from '../../utils/errors';
+import { buildSavedTripsCacheKey } from './listUserSavedTrips';
 
 export interface SaveUserTripInput {
   userId: string;
@@ -48,9 +49,5 @@ function normalizeInput(userId: string, trip: Trip): SaveTripInput {
     trip,
     fetchedAt: new Date(),
   };
-}
-
-export function buildSavedTripsCacheKey(userId: string): string {
-  return `user:${userId}:savedTrips`;
 }
 

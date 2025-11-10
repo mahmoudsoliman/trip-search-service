@@ -4,7 +4,8 @@ import type { SavedTripSnapshot, Trip } from '../../../../src/domain/SavedTrip';
 import type { SavedTripsRepository } from '../../../../src/domain/ports/SavedTripsRepository';
 import type { CachePort } from '../../../../src/domain/ports/CachePort';
 import type { TripsProvider } from '../../../../src/domain/ports/TripsProvider';
-import { saveUserTrip, buildSavedTripsCacheKey } from '../../../../src/app/use-cases/saveUserTrip';
+import { saveUserTrip } from '../../../../src/app/use-cases/saveUserTrip';
+import { buildSavedTripsCacheKey } from '../../../../src/app/use-cases/listUserSavedTrips';
 import { NotFoundError } from '../../../../src/utils/errors';
 
 const baseTrip: Trip = {
