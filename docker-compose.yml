@@ -11,10 +11,12 @@ services:
       - .env
     environment:
       DATABASE_URL: "file:/app/sqlite/dev.db"
+      REDIS_URL: "redis://redis:6379"
     volumes:
       - sqlite-data:/app/sqlite
     depends_on:
       - sqlite
+      - redis
 
   sqlite:
     image: keinos/sqlite3:latest
@@ -22,5 +24,13 @@ services:
     volumes:
       - sqlite-data:/app/sqlite
 
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+
 volumes:
   sqlite-data:
+  redis-data:

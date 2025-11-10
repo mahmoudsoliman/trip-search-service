@@ -8,6 +8,7 @@ import type { TripsProvider } from '../../domain/ports/TripsProvider';
 import type { UserRepository } from '../../domain/ports/UserRepository';
 import type { SavedTripsRepository } from '../../domain/ports/SavedTripsRepository';
 import { InMemoryCache } from '../cache/InMemoryCache';
+import { RedisCache } from '../cache/RedisCache';
 import { config } from '../config';
 import { createAuth0JwtVerifier, type VerifyAccessToken } from '../auth/auth0Jwt';
 import { loggerConfig } from '../obs/logger';
@@ -95,7 +96,9 @@ function createDependencies(
 
   const cache =
     overrides.cache ??
-    new InMemoryCache();
+    (config.REDIS_URL && config.NODE_ENV !== 'test'
+      ? new RedisCache({ url: config.REDIS_URL })
+      : new InMemoryCache());
 
   const tripsProvider =
     overrides.tripsProvider ??

@@ -17,6 +17,7 @@ const configSchema = z
     AUTH0_MGMT_SCOPES: z.string().optional(),
     AUTH0_CONNECTION: z.string().default('Username-Password-Authentication'),
     DATABASE_URL: z.string().default('file:./dev.db'),
+    REDIS_URL: z.string().optional(),
     CACHE_TTL_SEARCH_SECONDS: z.coerce.number().int().nonnegative().default(120),
     CACHE_TTL_SAVED_TRIPS_SECONDS: z.coerce.number().int().nonnegative().default(60),
     REQUEST_TIMEOUT_MS: z.coerce.number().int().positive().default(2500),
