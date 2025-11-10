@@ -12,7 +12,11 @@ import type { SavedTripsRepository } from '../../domain/ports/SavedTripsReposito
 import { InMemoryCache } from '../cache/InMemoryCache';
 import { RedisCache } from '../cache/RedisCache';
 import { config } from '../config';
-import { createAuth0JwtVerifier, type VerifyAccessToken } from '../auth/auth0Jwt';
+import {
+  createAuth0JwtVerifier,
+  type VerifiedAuth0Token,
+  type VerifyAccessToken,
+} from '../auth/auth0Jwt';
 import { loggerConfig } from '../obs/logger';
 import { TripsApiClient } from '../providers/TripsApiClient';
 import { PrismaUserRepository } from '../repos/PrismaUserRepository';
@@ -115,13 +119,19 @@ export async function startServer(): Promise<void> {
 function createDependencies(
   overrides: Partial<ApplicationDependencies>,
 ): ApplicationDependencies {
+  const authBypassEnabled = config.AUTH_BYPASS === true;
+
   if (!config.TRIPS_API_BASE_URL && !overrides.tripsProvider) {
     throw new Error(
       'TRIPS_API_BASE_URL must be configured or a trips provider implementation must be provided',
     );
   }
 
-  if ((!config.AUTH0_ISSUER || !config.AUTH0_AUDIENCE) && !overrides.verifyAccessToken) {
+  if (
+    !authBypassEnabled &&
+    (!config.AUTH0_ISSUER || !config.AUTH0_AUDIENCE) &&
+    !overrides.verifyAccessToken
+  ) {
     throw new Error(
       'AUTH0_ISSUER and AUTH0_AUDIENCE must be configured or a verifyAccessToken implementation must be provided',
     );
@@ -158,15 +168,16 @@ function createDependencies(
 
   const verifyAccessToken =
     overrides.verifyAccessToken ??
-    createAuth0JwtVerifier({
-      issuer: config.AUTH0_ISSUER!,
-      audience: config.AUTH0_AUDIENCE!,
-    });
+    (authBypassEnabled
+      ? createBypassVerifier()
+      : createAuth0JwtVerifier({
+          issuer: config.AUTH0_ISSUER!,
+          audience: config.AUTH0_AUDIENCE!,
+        }));
 
   if (
-    (!config.AUTH0_MGMT_CLIENT_ID ||
-      !config.AUTH0_MGMT_CLIENT_SECRET ||
-      !config.AUTH0_ISSUER) &&
+    !authBypassEnabled &&
+    (!config.AUTH0_MGMT_CLIENT_ID || !config.AUTH0_MGMT_CLIENT_SECRET || !config.AUTH0_ISSUER) &&
     !overrides.auth0ManagementClient
   ) {
     throw new Error(
@@ -176,14 +187,25 @@ function createDependencies(
 
   const auth0ManagementClient =
     overrides.auth0ManagementClient ??
-    new Auth0ManagementClient({
-      domain: ensureTrailingSlash(config.AUTH0_ISSUER!),
-      clientId: config.AUTH0_MGMT_CLIENT_ID!,
-      clientSecret: config.AUTH0_MGMT_CLIENT_SECRET!,
-      audience: config.AUTH0_MGMT_AUDIENCE ?? `${ensureTrailingSlash(config.AUTH0_ISSUER!)}api/v2/`,
-      connection: config.AUTH0_CONNECTION,
-      scope: config.AUTH0_MGMT_SCOPES,
-    });
+    (authBypassEnabled
+      ? {
+          createUser() {
+            return Promise.reject(
+              new Error(
+                'Auth0 management client is not configured. Set AUTH_BYPASS=false and provide Auth0 credentials to use /v1/users.',
+              ),
+            );
+          },
+        }
+      : new Auth0ManagementClient({
+          domain: ensureTrailingSlash(config.AUTH0_ISSUER!),
+          clientId: config.AUTH0_MGMT_CLIENT_ID!,
+          clientSecret: config.AUTH0_MGMT_CLIENT_SECRET!,
+          audience:
+            config.AUTH0_MGMT_AUDIENCE ?? `${ensureTrailingSlash(config.AUTH0_ISSUER!)}api/v2/`,
+          connection: config.AUTH0_CONNECTION,
+          scope: config.AUTH0_MGMT_SCOPES,
+        }));
 
   return {
     cache,
@@ -195,6 +217,16 @@ function createDependencies(
     prismaClient,
     tripsApiBaseUrl: overrides.tripsApiBaseUrl ?? config.TRIPS_API_BASE_URL,
   };
+}
+
+function createBypassVerifier(): VerifyAccessToken {
+  return (): Promise<VerifiedAuth0Token> =>
+    Promise.resolve({
+    sub: 'dev|bypass-user',
+    email: 'dev@example.com',
+    name: 'Bypass User',
+    payload: {},
+  });
 }
 
 async function disconnectCache(cache: CachePort): Promise<void> {

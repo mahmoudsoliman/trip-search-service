@@ -61,6 +61,7 @@ docker compose up --build
 | `AUTH0_MGMT_AUDIENCE` | Management API audience (defaults to `<issuer>api/v2/`) |
 | `AUTH0_MGMT_SCOPES` | Space-separated scopes (e.g. `create:users read:users`) |
 | `AUTH0_CONNECTION` | Auth0 database connection name |
+| `AUTH_BYPASS` | Set to `true` to bypass JWT verification and use a dummy user (dev only) |
 | `DATABASE_URL` | Prisma connection string (SQLite by default) |
 | `REDIS_URL` | Redis connection URI (omit to use in-memory cache) |
 | `CACHE_TTL_SEARCH_SECONDS` | TTL for trip search cache entries |
@@ -93,6 +94,13 @@ If any mandatory dependency fails, the route responds with `503` and per-check d
 
 ### API Docs
 Swagger UI is available at `http://localhost:3000/docs`. The generated OpenAPI document declares HTTP bearer authentication (JWT) for protected routes.
+
+### Auth Bypass (Local Convenience)
+If you don’t have Auth0 set up, you can flip `AUTH_BYPASS=true` in `.env`. The server will:
+- Skip JWT verification and attach a synthetic `dev|bypass-user`.
+- Disable the `/v1/users` route (it will respond with an error telling you to provide Auth0 credentials).
+
+This mode lets you exercise the trips and saved-trips workflow without issuing real tokens.
 
 ## Architecture Overview
 

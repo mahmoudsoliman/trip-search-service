@@ -21,7 +21,8 @@ const configSchema = z
     CACHE_TTL_SEARCH_SECONDS: z.coerce.number().int().nonnegative().default(120),
     CACHE_TTL_SAVED_TRIPS_SECONDS: z.coerce.number().int().nonnegative().default(60),
     REQUEST_TIMEOUT_MS: z.coerce.number().int().positive().default(2500),
-    RETRY_ATTEMPTS: z.coerce.number().int().nonnegative().default(3)
+    RETRY_ATTEMPTS: z.coerce.number().int().nonnegative().default(3),
+    AUTH_BYPASS: z.coerce.boolean().optional(),
   })
   .transform((value) => ({
     ...value,
