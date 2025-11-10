@@ -1,6 +1,40 @@
 # Trip Search Service
 
-Fastify + TypeScript API that integrates with a third-party trips provider, persists saved trip snapshots per user, and authenticates requests with Auth0. The codebase follows a clean/hexagonal architecture (domain → application → infrastructure/presentation).
+A Fastify + TypeScript API for searching trips from a third‑party provider, caching results, and persisting user saved-trip snapshots. Authentication is handled via Auth0, users are automatically provisioned on first request, and data is stored through Prisma (SQLite by default). The implementation follows a Clean/Hexagonal architecture with domain-driven influences.
+
+## Features at a Glance
+
+- **Trip Search with Sorting & Caching**
+  - `GET /v1/trips/search?origin=SYD&destination=GRU&sort_by=cheapest|fastest`
+  - Hits the external trips API (via `TripsApiClient`), sorts using `TripSorter`, and caches results with either Redis or in-memory Map (`CachePort` implementation).
+  - Cache TTL is configurable via `CACHE_TTL_SEARCH_SECONDS`.
+
+- **Authentication & User Provisioning**
+  - Auth0 JWT guard validates incoming tokens (issuer + audience) and attaches claims to the request.
+  - The guard invokes the `ensureUser` use case, creating/updating a local user record through the `UserRepository`.
+  - All `/v1/me/*` routes require a bearer token (or rely on the `AUTH_BYPASS` dev mode).
+
+- **Saved Trip Snapshots**
+  - `POST /v1/me/saved-trips` accepts a `tripId`, fetches the latest snapshot from the provider, and upserts it via `SavedTripsRepository`.
+  - `GET /v1/me/saved-trips` reads from cache first (`CACHE_TTL_SAVED_TRIPS_SECONDS`), hitting the database only on cache miss.
+  - `DELETE /v1/me/saved-trips/:externalTripId` removes the record and invalidates the cache.
+  - Snapshots are stored in the `UserSavedTrip` Prisma model (`sqlite` default), capturing origin/destination, cost, duration, type, and display name.
+
+- **Explicit User Registration**
+  - `POST /v1/users` calls the Auth0 Management API (via `Auth0ManagementClient` port) to create a user in Auth0 and persist it locally.
+
+- **Operational Tooling**
+  - `/health` (liveness) and `/ready` (readiness) endpoints with cached, database, and trips API checks.
+  - Swagger UI at `/docs` (`@fastify/swagger` + `swagger-ui`).
+  - Structured logging via `pino`, with optional pretty logging in development.
+  - Docker Compose support for API + Redis + SQLite sidecar.
+
+- **Clean Architecture Layers**
+  - `domain/`: Entity definitions (`User`, `SavedTrip`) and port interfaces (`TripsProvider`, `UserRepository`, `CachePort`, `Auth0ManagementClient`).
+  - `app/`: Use cases (`searchTrips`, `ensureUser`, `saveUserTrip`, etc.) orchestrating domain logic.
+  - `infra/`: Adapter implementations (Fastify server/routes, Prisma repos, Auth0 client, trips provider, cache adapters).
+  - `presentation/`: Zod schemas and response mappers isolating HTTP payload concerns.
+
 
 ## Getting Started
 
