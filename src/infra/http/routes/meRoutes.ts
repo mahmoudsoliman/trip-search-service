@@ -8,7 +8,7 @@ import type { SavedTripsRepository } from '../../../domain/ports/SavedTripsRepos
 import type { TripsProvider } from '../../../domain/ports/TripsProvider';
 import { mapSavedTrip } from '../../../presentation/mappers/savedTripMapper';
 import { saveUserTripSchema } from '../../../presentation/schemas/saveUserTrip.schema';
-import { ValidationError } from '../../../utils/errors';
+import { ApplicationError, ValidationError } from '../../../utils/errors';
 
 interface MeRouteDependencies {
   savedTripsRepository: SavedTripsRepository;
@@ -28,8 +28,7 @@ export function registerMeRoutes(
 
     instance.get('/v1/me/profile', async (request, reply) => {
       if (!request.currentUser) {
-        void reply.status(500);
-        return { error: 'User context missing' };
+        throw new ApplicationError('User context missing', 500);
       }
 
       return {
@@ -78,8 +77,7 @@ export function registerMeRoutes(
 
     instance.get('/v1/me/saved-trips', async (request, reply) => {
       if (!request.currentUser) {
-        void reply.status(500);
-        return { error: 'User context missing' };
+        throw new ApplicationError('User context missing', 500);
       }
 
       const trips = await listUserSavedTrips(
@@ -102,8 +100,7 @@ export function registerMeRoutes(
 
     instance.delete('/v1/me/saved-trips/:externalTripId', async (request, reply) => {
       if (!request.currentUser) {
-        void reply.status(500);
-        return { error: 'User context missing' };
+        throw new ApplicationError('User context missing', 500);
       }
 
       const externalTripId = (request.params as { externalTripId: string }).externalTripId;

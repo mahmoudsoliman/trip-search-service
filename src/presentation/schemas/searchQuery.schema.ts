@@ -1,57 +1,6 @@
 import { z } from 'zod';
 
-const ALLOWED_IATA_CODES = new Set([
-  'ATL',
-  'PEK',
-  'LAX',
-  'DXB',
-  'HND',
-  'ORD',
-  'LHR',
-  'PVG',
-  'CDG',
-  'DFW',
-  'AMS',
-  'FRA',
-  'IST',
-  'CAN',
-  'JFK',
-  'SIN',
-  'DEN',
-  'ICN',
-  'BKK',
-  'SFO',
-  'LAS',
-  'CLT',
-  'MIA',
-  'KUL',
-  'SEA',
-  'MUC',
-  'EWR',
-  'MAD',
-  'HKG',
-  'MCO',
-  'PHX',
-  'IAH',
-  'SYD',
-  'MEL',
-  'GRU',
-  'YYZ',
-  'LGW',
-  'BCN',
-  'MAN',
-  'BOM',
-  'DEL',
-  'ZRH',
-  'SVO',
-  'DME',
-  'JNB',
-  'ARN',
-  'OSL',
-  'CPH',
-  'HEL',
-  'VIE',
-]);
+import { ALLOWED_AIRPORT_CODES, ALLOWED_AIRPORT_CODE_SET } from '../constants/airports';
 
 const iataSchema = z
   .string()
@@ -62,7 +11,7 @@ const iataSchema = z
   .refine((value) => /^[A-Z]{3}$/.test(value), {
     message: 'Must be a 3-letter IATA code',
   })
-  .refine((value) => ALLOWED_IATA_CODES.has(value), {
+  .refine((value) => ALLOWED_AIRPORT_CODE_SET.has(value), {
     message: 'Airport code is not supported',
   });
 
